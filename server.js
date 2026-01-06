@@ -1,7 +1,7 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const axios = require("axios"); // 단어를 긁어오기 위한 도구
+const axios = require("axios");
 
 const app = express();
 const server = http.createServer(app);
@@ -10,28 +10,23 @@ const io = new Server(server);
 app.use(express.static(__dirname + "/public"));
 
 // ----------------------------------------------------------------
-// [구글 시트 연동 설정]
-// 아까 복사한 구글 시트 CSV 주소를 여기에 넣으세요!
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
-let words = ["사과", "바나나", "기차"]; // 시트 로드 전 기본 단어
+// [구글 시트 연동] - 아까 복사한 CSV 주소를 여기에 꼭 넣으세요!
+const SHEET_URL = "여기에_구글_시트_CSV_주소_입력";
+let words = ["사과", "바나나", "기차", "치킨", "컴퓨터"];
 
 async function loadWordsFromSheet() {
   try {
     const response = await axios.get(SHEET_URL);
-    // CSV는 줄바꿈(\r\n 또는 \n)으로 단어가 구분됩니다.
     words = response.data
       .split(/\r?\n/)
       .map((w) => w.trim())
       .filter((w) => w.length > 0);
-    console.log(`[시스템] 단어장 로드 완료! 총 ${words.length}개`);
+    console.log(`[시스템] 단어 로드 완료: ${words.length}개`);
   } catch (e) {
-    console.log("[에러] 시트를 불러오지 못했습니다. 기본 단어를 사용합니다.");
+    console.log("[에러] 시트 로드 실패, 기본 단어 사용");
   }
 }
-// 서버 시작 시 단어 로드
 loadWordsFromSheet();
-// 10분마다 단어장을 자동으로 새로고침 (선택 사항)
 setInterval(loadWordsFromSheet, 10 * 60 * 1000);
 // ----------------------------------------------------------------
 
@@ -63,6 +58,11 @@ io.on("connection", (socket) => {
 
   socket.on("drawing", (data) => {
     if (socket.id === painterId) socket.broadcast.emit("drawing", data);
+  });
+
+  // [중요] 선 끊기 신호 중계
+  socket.on("stop_drawing", () => {
+    socket.broadcast.emit("stop_drawing");
   });
 
   socket.on("send_message", (msg) => {
