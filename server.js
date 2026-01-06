@@ -11,7 +11,7 @@ app.use(express.static(__dirname + "/public"));
 
 // ----------------------------------------------------------------
 // [구글 시트 연동] - 아까 복사한 CSV 주소를 여기에 꼭 넣으세요!
-const SHEET_URL = "여기에_구글_시트_CSV_주소_입력";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
 let words = ["사과", "바나나", "기차", "치킨", "컴퓨터"];
 
 async function loadWordsFromSheet() {
@@ -85,3 +85,4 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
