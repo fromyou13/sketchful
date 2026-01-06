@@ -2,8 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>캐치마인드 와이드 - 구글 시트 연동판</title>
+    <title>캐치마인드 WIDE - 최종 수정판</title>
     <style>
       :root {
         --main-bg: #e9ecef;
@@ -20,8 +19,6 @@
         height: 100vh;
         overflow: hidden;
       }
-
-      /* 입장 전 로그인 화면 */
       #login-overlay {
         position: fixed;
         top: 0;
@@ -39,31 +36,7 @@
         padding: 40px;
         border-radius: 20px;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       }
-      .login-box input {
-        padding: 12px;
-        width: 220px;
-        border: 2px solid #ddd;
-        border-radius: 10px;
-        font-size: 1.1em;
-        margin-bottom: 20px;
-        outline: none;
-      }
-      .login-box input:focus {
-        border-color: var(--primary);
-      }
-      .login-box button {
-        padding: 12px 30px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 1.1em;
-        font-weight: bold;
-      }
-
       header {
         background: var(--primary);
         color: white;
@@ -71,45 +44,34 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       }
-
       .main-container {
         display: flex;
         flex: 1;
         padding: 20px;
         gap: 20px;
         justify-content: center;
-        align-items: stretch;
       }
-
-      /* 왼쪽 유저 목록 */
       .user-list-panel {
         width: 200px;
         background: var(--panel-bg);
         border-radius: 15px;
         padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       }
       .user-item {
         padding: 12px;
         border-radius: 10px;
         background: #f8f9fa;
-        border: 2px solid transparent;
+        margin-bottom: 8px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
       }
       .user-item.painter {
-        border-color: var(--accent);
+        border: 2px solid var(--accent);
         background: #fffde7;
         font-weight: bold;
       }
-
-      /* 중앙 도화지 영역 */
       .canvas-area {
         flex: 1;
         max-width: 900px;
@@ -128,10 +90,8 @@
         cursor: crosshair;
         width: 100%;
         height: auto;
-        max-height: 70vh;
         touch-action: none;
       }
-
       .toolbar {
         margin-top: 20px;
         display: flex;
@@ -146,15 +106,11 @@
         border-radius: 50%;
         cursor: pointer;
         border: 3px solid white;
-        transition: 0.2s;
       }
       .color-dot.active {
         transform: translateY(-5px);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
         border-color: #333;
       }
-
-      /* 오른쪽 채팅창 */
       .sidebar {
         width: 300px;
         display: flex;
@@ -169,29 +125,7 @@
         overflow-y: auto;
         border-bottom: 1px solid #eee;
         margin-bottom: 15px;
-        padding: 5px;
       }
-      .chat-input-wrapper {
-        display: flex;
-        gap: 8px;
-      }
-      .chat-input-wrapper input {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        outline: none;
-      }
-      .chat-input-wrapper button {
-        padding: 10px 15px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-
       .system {
         color: #28a745;
         font-weight: bold;
@@ -207,37 +141,25 @@
   <body>
     <div id="login-overlay">
       <div class="login-box">
-        <h1 style="margin-top: 0; color: var(--primary)">🎨 캐치마인드 WIDE</h1>
-        <p style="color: #666">사용할 닉네임을 입력하고 입장하세요</p>
-        <input type="text" id="nickname-input" placeholder="닉네임 (최대 10자)" maxlength="10" />
-        <br />
-        <button onclick="joinGame()">게임 시작하기</button>
+        <h1>🎨 캐치마인드 WIDE</h1>
+        <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="10" style="padding: 10px; margin-bottom: 10px" /><br />
+        <button
+          onclick="joinGame()"
+          style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer"
+        >
+          게임 시작
+        </button>
       </div>
     </div>
 
     <header>
-      <div style="font-size: 1.5em; font-weight: 900; letter-spacing: 1px">CATCH MIND</div>
-      <div id="status-text" style="font-size: 1.1em; background: rgba(0, 0, 0, 0.1); padding: 5px 15px; border-radius: 10px">대기 중...</div>
-      <div
-        id="word-display"
-        style="
-          background: rgba(255, 255, 255, 0.2);
-          padding: 5px 20px;
-          border-radius: 20px;
-          font-size: 1.4em;
-          font-weight: bold;
-          color: var(--accent);
-          min-width: 150px;
-          text-align: center;
-        "
-      ></div>
+      <div style="font-weight: bold; font-size: 1.2em">CATCH MIND</div>
+      <div id="status-text">접속 대기 중...</div>
+      <div id="word-display" style="color: var(--accent); font-weight: bold; font-size: 1.4em"></div>
     </header>
 
     <div class="main-container">
-      <div class="user-list-panel" id="user-list">
-        <div style="font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; color: #555">PLAYERS</div>
-      </div>
-
+      <div class="user-list-panel" id="user-list"><strong>PLAYERS</strong></div>
       <div class="canvas-area">
         <canvas id="paint" width="850" height="550"></canvas>
         <div class="toolbar" id="palette">
@@ -245,22 +167,14 @@
           <div class="color-dot" style="background: #e74c3c" onclick="pickColor('#e74c3c', this)"></div>
           <div class="color-dot" style="background: #3498db" onclick="pickColor('#3498db', this)"></div>
           <div class="color-dot" style="background: #2ecc71" onclick="pickColor('#2ecc71', this)"></div>
-          <div class="color-dot" style="background: #f1c40f" onclick="pickColor('#f1c40f', this)"></div>
-          <div style="width: 2px; background: #ddd; margin: 0 5px"></div>
-          <button
-            onclick="pickColor('white', this)"
-            style="border: none; background: #dee2e6; border-radius: 20px; cursor: pointer; padding: 5px 15px; font-weight: bold; transition: 0.2s"
-          >
-            🧹 지우개
-          </button>
+          <button onclick="pickColor('white', this)" style="border: none; padding: 5px 15px; cursor: pointer; border-radius: 15px">🧹 지우개</button>
         </div>
       </div>
-
       <div class="sidebar">
         <div id="chat-box"></div>
-        <div class="chat-input-wrapper">
-          <input type="text" id="chat-input" placeholder="정답 또는 메시지 입력" />
-          <button onclick="sendMessage()">전송</button>
+        <div style="display: flex; gap: 5px">
+          <input type="text" id="chat-input" style="flex: 1; padding: 8px" placeholder="정답 입력..." />
+          <button onclick="sendMessage()" style="padding: 8px 15px">전송</button>
         </div>
       </div>
     </div>
@@ -270,8 +184,6 @@
       const socket = io();
       const canvas = document.getElementById("paint");
       const ctx = canvas.getContext("2d");
-      const statusText = document.getElementById("status-text");
-      const wordDisplay = document.getElementById("word-display");
       const chatBox = document.getElementById("chat-box");
       const chatInput = document.getElementById("chat-input");
       const userListDiv = document.getElementById("user-list");
@@ -283,21 +195,17 @@
 
       function joinGame() {
         const nickname = document.getElementById("nickname-input").value.trim();
-        if (!nickname) return alert("닉네임을 입력해주세요!");
+        if (!nickname) return;
         socket.emit("set_nickname", nickname);
         document.getElementById("login-overlay").style.display = "none";
       }
 
       socket.on("update_players", (players) => {
-        userListDiv.innerHTML =
-          '<div style="font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; color:#555;">PLAYERS</div>';
+        userListDiv.innerHTML = "<strong>PLAYERS</strong>";
         for (let id in players) {
-          const p = players[id];
           const div = document.createElement("div");
           div.className = "user-item" + (id === currentPainterId ? " painter" : "");
-          div.innerHTML = `<span>${id === socket.id ? "<b>나</b>" : p.name}</span><span style="font-weight:bold; color:var(--primary)">${
-            p.score
-          }</span>`;
+          div.innerHTML = `<span>${id === socket.id ? "나" : players[id].name}</span><span>${players[id].score}</span>`;
           userListDiv.appendChild(div);
         }
       });
@@ -306,47 +214,37 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentPainterId = data.painterId;
         isPainter = socket.id === data.painterId;
-        wordDisplay.innerText = "";
-
-        if (isPainter) {
-          statusText.innerText = "🎨 당신은 출제자입니다!";
-          document.getElementById("palette").style.opacity = "1";
-          document.getElementById("palette").style.pointerEvents = "auto";
-        } else {
-          statusText.innerText = "🧐 정답을 맞춰보세요!";
-          document.getElementById("palette").style.opacity = "0.3";
-          document.getElementById("palette").style.pointerEvents = "none";
-        }
+        document.getElementById("status-text").innerText = isPainter ? "당신은 출제자입니다!" : "정답을 맞춰보세요!";
+        document.getElementById("word-display").innerText = "";
+        document.getElementById("palette").style.opacity = isPainter ? "1" : "0.3";
       });
 
-      socket.on("get_answer", (answer) => {
-        wordDisplay.innerText = "제시어: " + answer;
+      socket.on("get_answer", (ans) => {
+        document.getElementById("word-display").innerText = "제시어: " + ans;
       });
 
-      function pickColor(color, el) {
-        if (!isPainter) return;
-        currentColor = color;
-        document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
-        if (el.classList.contains("color-dot")) el.classList.add("active");
-      }
-
-      // 마우스 좌표 보정
       function getCoords(e) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+        return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
       }
 
+      // 마우스 누를 때: 그리기 시작
       canvas.addEventListener("mousedown", (e) => {
+        if (!isPainter) return;
+        isDrawing = true;
+        const coords = getCoords(e);
+        ctx.beginPath(); // 선 끊기 방지용 시작
+        ctx.moveTo(coords.x, coords.y);
+      });
+
+      // 마우스 뗄 때: 선 끊기 신호 전송
+      canvas.addEventListener("mouseup", () => {
         if (isPainter) {
-          isDrawing = true;
-          const coords = getCoords(e);
-          ctx.beginPath();
-          ctx.moveTo(coords.x, coords.y);
+          isDrawing = false;
+          socket.emit("stop_drawing");
         }
       });
-      canvas.addEventListener("mouseup", () => (isDrawing = false));
+
       canvas.addEventListener("mousemove", (e) => {
         if (!isDrawing || !isPainter) return;
         const coords = getCoords(e);
@@ -359,40 +257,44 @@
         if (!isPainter) draw(data);
       });
 
+      // 서버에서 '선 끊기' 신호를 받으면 path 초기화
+      socket.on("stop_drawing", () => {
+        ctx.beginPath();
+      });
+
       function draw(data) {
         ctx.lineWidth = data.color === "white" ? 30 : 5;
         ctx.lineCap = "round";
-        ctx.lineJoin = "round";
         ctx.strokeStyle = data.color;
         ctx.lineTo(data.x, data.y);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(data.x, data.y);
+        // ctx.beginPath(); // 여기서 beginPath를 쓰면 점만 찍히므로 제거했습니다.
       }
 
       function sendMessage() {
         const msg = chatInput.value.trim();
-        if (!msg) return;
-        socket.emit("send_message", msg);
-        chatInput.value = "";
+        if (msg) {
+          socket.emit("send_message", msg);
+          chatInput.value = "";
+        }
       }
-
       socket.on("receive_message", (data) => {
         const div = document.createElement("div");
-        div.style.marginBottom = "8px";
-        if (data.user === "System") {
-          div.className = "system";
-          div.innerText = data.text;
-        } else {
-          div.innerHTML = `<span style="font-weight:bold; color:#555">${data.user}:</span> ${data.text}`;
-        }
+        if (data.user === "System") div.className = "system";
+        div.innerHTML = `<b>${data.user}:</b> ${data.text}`;
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
       });
-
       chatInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
       });
+      function pickColor(color, el) {
+        if (!isPainter) return;
+        currentColor = color;
+        document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
+        if (el.classList.contains("color-dot")) el.classList.add("active");
+      }
     </script>
   </body>
 </html>
+
