@@ -1,180 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>캐치마인드 WIDE - 최종 수정본</title>
+    <title>캐치마인드 WIDE - 완벽 수정본</title>
     <style>
-      :root {
-        --main-bg: #e9ecef;
-        --panel-bg: #ffffff;
-        --primary: #4a90e2;
-        --accent: #ffeb3b;
-      }
+      :root { --main-bg: #e9ecef; --panel-bg: #ffffff; --primary: #4a90e2; --accent: #ffeb3b; }
       body {
-        font-family: "Pretendard", sans-serif;
-        background: var(--main-bg);
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        overflow: hidden;
+        font-family: "Pretendard", sans-serif; background: var(--main-bg); margin: 0;
+        display: flex; flex-direction: column; height: 100vh; overflow: hidden;
       }
       #login-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 1000;
       }
-      .login-box {
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        text-align: center;
-      }
+      .login-box { background: white; padding: 40px; border-radius: 20px; text-align: center; }
       header {
-        background: var(--primary);
-        color: white;
-        padding: 15px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 60px;
-        box-sizing: border-box;
+        background: var(--primary); color: white; padding: 15px 30px;
+        display: flex; justify-content: space-between; align-items: center; height: 60px; box-sizing: border-box;
       }
       .main-container {
-        display: flex;
-        flex: 1;
-        padding: 20px;
-        gap: 20px;
-        justify-content: center;
-        height: calc(100vh - 60px);
-        box-sizing: border-box;
+        display: flex; flex: 1; padding: 20px; gap: 20px; justify-content: center;
+        height: calc(100vh - 60px); box-sizing: border-box;
       }
       .user-list-panel {
-        width: 180px;
-        background: var(--panel-bg);
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        overflow-y: auto;
+        width: 180px; background: var(--panel-bg); border-radius: 15px;
+        padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow-y: auto;
       }
       .user-item {
-        padding: 10px;
-        border-radius: 8px;
-        background: #f8f9fa;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9em;
+        padding: 10px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px;
+        display: flex; justify-content: space-between; font-size: 0.9em;
       }
-      .user-item.painter {
-        border: 2px solid var(--accent);
-        background: #fffde7;
-        font-weight: bold;
-      }
+      .user-item.painter { border: 2px solid var(--accent); background: #fffde7; font-weight: bold; }
       .canvas-area {
-        flex: 1;
-        max-width: 850px;
-        background: var(--panel-bg);
-        border-radius: 15px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        flex: 1; max-width: 850px; background: var(--panel-bg); border-radius: 15px;
+        padding: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       }
-      canvas {
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        cursor: crosshair;
-        width: 100%;
-        height: auto;
-        touch-action: none;
-      }
-      .toolbar {
-        margin-top: 15px;
-        display: flex;
-        gap: 10px;
-        padding: 8px 20px;
-        background: #f1f3f5;
-        border-radius: 30px;
-      }
-      .color-dot {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 2px solid white;
-      }
-      .color-dot.active {
-        transform: translateY(-4px);
-        border-color: #333;
-      }
+      canvas { background: #fff; border: 1px solid #ddd; border-radius: 10px; cursor: crosshair; width: 100%; height: auto; touch-action: none; }
+      .toolbar { margin-top: 15px; display: flex; gap: 10px; padding: 8px 20px; background: #f1f3f5; border-radius: 30px; }
+      .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid white; }
+      .color-dot.active { transform: translateY(-4px); border-color: #333; }
       .sidebar {
-        width: 280px;
-        display: flex;
-        flex-direction: column;
-        background: var(--panel-bg);
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        height: 100%;
-        box-sizing: border-box;
+        width: 280px; display: flex; flex-direction: column; background: var(--panel-bg);
+        border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); height: 100%; box-sizing: border-box;
       }
-      #chat-box {
-        flex: 1;
-        overflow-y: auto;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 15px;
-        padding-right: 5px;
-        word-break: break-all;
-      }
-      .system {
-        color: #28a745;
-        font-weight: bold;
-        text-align: center;
-        margin: 8px 0;
-        background: #e8f5e9;
-        padding: 8px;
-        border-radius: 8px;
-        font-size: 0.85em;
-      }
+      #chat-box { flex: 1; overflow-y: auto; border-bottom: 1px solid #eee; margin-bottom: 15px; padding-right: 5px; word-break: break-all; }
+      .system { color: #28a745; font-weight: bold; text-align: center; margin: 8px 0; background: #e8f5e9; padding: 8px; border-radius: 8px; font-size: 0.85em; }
     </style>
   </head>
   <body>
     <div id="login-overlay">
       <div class="login-box">
-        <h2>🎨 캐치마인드 WIDE</h2>
-        <input
-          type="text"
-          id="nickname-input"
-          placeholder="닉네임 입력"
-          maxlength="10"
-          style="padding: 10px; width: 80%"
-          onkeypress="if (event.keyCode == 13) joinGame();"
-        /><br /><br />
-        <button
-          onclick="joinGame()"
-          style="padding: 10px 30px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer"
-        >
-          입장하기
-        </button>
+        <h2>🎨 캐치마인드</h2>
+        <input type="text" id="nickname-input" placeholder="닉네임" maxlength="10" style="padding: 10px;" onkeypress="if(event.keyCode==13) joinGame()"/><br /><br />
+        <button onclick="joinGame()" style="padding: 10px 30px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer">입장</button>
       </div>
     </div>
-
     <header>
-      <div style="font-weight: bold">CATCH MIND</div>
+      <div style="font-weight: bold;">CATCH MIND</div>
       <div id="status-text">대기 중...</div>
-      <div id="word-display" style="color: var(--accent); font-weight: bold"></div>
+      <div id="word-display" style="color: var(--accent); font-weight: bold;"></div>
     </header>
-
     <div class="main-container">
       <div class="user-list-panel" id="user-list"><strong>PLAYERS</strong></div>
       <div class="canvas-area">
@@ -184,23 +69,17 @@
           <div class="color-dot" style="background: #e74c3c" onclick="pickColor('#e74c3c', this)"></div>
           <div class="color-dot" style="background: #3498db" onclick="pickColor('#3498db', this)"></div>
           <div class="color-dot" style="background: #2ecc71" onclick="pickColor('#2ecc71', this)"></div>
-          <button onclick="pickColor('white', this)" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px; background: #ddd">
-            지우개
-          </button>
-          <button onclick="clearCanvas()" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px; background: #ffcfcf">
-            전체삭제
-          </button>
+          <button onclick="pickColor('white', this)" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px;">지우개</button>
         </div>
       </div>
       <div class="sidebar">
         <div id="chat-box"></div>
         <div style="display: flex; gap: 5px">
-          <input type="text" id="chat-input" style="flex: 1; padding: 8px" placeholder="정답은?" />
+          <input type="text" id="chat-input" style="flex: 1; padding: 8px" placeholder="정답 입력..." />
           <button onclick="sendMessage()">전송</button>
         </div>
       </div>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
@@ -210,16 +89,11 @@
       const chatInput = document.getElementById("chat-input");
       const userListDiv = document.getElementById("user-list");
 
-      let isDrawing = false;
-      let isPainter = false;
-      let currentColor = "black";
-      let currentPainterId = null;
+      let isDrawing = false, isPainter = false, currentColor = "black", currentPainterId = null;
 
       function joinGame() {
         const nickname = document.getElementById("nickname-input").value.trim();
-        if (!nickname) return;
-        socket.emit("set_nickname", nickname);
-        document.getElementById("login-overlay").style.display = "none";
+        if (nickname) { socket.emit("set_nickname", nickname); document.getElementById("login-overlay").style.display = "none"; }
       }
 
       socket.on("update_players", (players) => {
@@ -241,32 +115,28 @@
         document.getElementById("palette").style.opacity = isPainter ? "1" : "0.3";
       });
 
-      socket.on("get_answer", (ans) => {
-        document.getElementById("word-display").innerText = "제시어: " + ans;
-      });
+      socket.on("get_answer", (ans) => { document.getElementById("word-display").innerText = "제시어: " + ans; });
 
       function getCoords(e) {
         const rect = canvas.getBoundingClientRect();
-        return {
-          x: (e.clientX - rect.left) * (canvas.width / rect.width),
-          y: (e.clientY - rect.top) * (canvas.height / rect.height),
-        };
+        return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
       }
 
-      // 그리기 시작 (선 튀기 방지)
+      // [핵심] 선 끊기 방지 로직
       canvas.addEventListener("mousedown", (e) => {
         if (!isPainter) return;
         isDrawing = true;
         const coords = getCoords(e);
-        ctx.beginPath();
-        ctx.moveTo(coords.x, coords.y);
-        socket.emit("start_drawing", coords);
+        ctx.beginPath(); ctx.moveTo(coords.x, coords.y);
+        socket.emit("start_drawing", { x: coords.x, y: coords.y, color: currentColor });
       });
 
-      socket.on("start_drawing", (coords) => {
+      socket.on("start_drawing", (data) => {
         if (!isPainter) {
           ctx.beginPath();
-          ctx.moveTo(coords.x, coords.y);
+          ctx.strokeStyle = data.color;
+          ctx.lineWidth = data.color === "white" ? 30 : 5;
+          ctx.moveTo(data.x, data.y);
         }
       });
 
@@ -278,52 +148,36 @@
         socket.emit("drawing", data);
       });
 
-      canvas.addEventListener("mouseup", () => {
-        if (isPainter) {
-          isDrawing = false;
-          socket.emit("stop_drawing");
+      socket.on("drawing", (data) => {
+        if (!isPainter) {
+          ctx.strokeStyle = data.color;
+          ctx.lineWidth = data.color === "white" ? 30 : 5;
+          ctx.lineTo(data.x, data.y);
+          ctx.stroke();
         }
       });
 
-      socket.on("drawing", (data) => {
-        if (!isPainter) draw(data);
-      });
-      socket.on("stop_drawing", () => {
-        ctx.beginPath();
-      });
+      canvas.addEventListener("mouseup", () => { if (isPainter) { isDrawing = false; socket.emit("stop_drawing"); } });
+      socket.on("stop_drawing", () => ctx.beginPath());
 
       function draw(data) {
         ctx.lineWidth = data.color === "white" ? 30 : 5;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
         ctx.strokeStyle = data.color;
-        ctx.lineTo(data.x, data.y);
-        ctx.stroke();
-      }
-
-      function clearCanvas() {
-        if (!isPainter) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        socket.emit("stop_drawing"); // 선 끊기 신호 활용
+        ctx.lineTo(data.x, data.y); ctx.stroke();
       }
 
       function sendMessage() {
         const msg = chatInput.value.trim();
-        if (msg) {
-          socket.emit("send_message", msg);
-          chatInput.value = "";
-        }
+        if (msg) { socket.emit("send_message", msg); chatInput.value = ""; }
       }
       socket.on("receive_message", (data) => {
         const div = document.createElement("div");
         if (data.user === "System") div.className = "system";
         div.innerHTML = `<b>${data.user}:</b> ${data.text}`;
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight;
       });
-      chatInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
+      chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
       function pickColor(color, el) {
         if (!isPainter) return;
         currentColor = color;
