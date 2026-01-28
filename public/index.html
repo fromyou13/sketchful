@@ -4,16 +4,19 @@
     <meta charset="UTF-8" />
     <title>캐치마인드 WIDE - 완벽 수정본</title>
     <style>
-      :root { --main-bg: #e9ecef; --panel-bg: #ffffff; --primary: #4a90e2; --accent: #ffeb3b; }
+      :root { --main-bg: #e9ecef; --panel-bg: #ffffff; --primary: #4a90e2; --accent: #ffeb3b; --danger: #ff5252; }
       body {
         font-family: "Pretendard", sans-serif; background: var(--main-bg); margin: 0;
         display: flex; flex-direction: column; height: 100vh; overflow: hidden;
       }
-      #login-overlay {
+      #login-overlay, #result-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 1000;
       }
-      .login-box { background: white; padding: 40px; border-radius: 20px; text-align: center; }
+      #result-overlay { display: none; flex-direction: column; color: white; }
+      .login-box, .result-box { background: white; padding: 40px; border-radius: 20px; text-align: center; color: #333; min-width: 300px; }
+      .result-box h1 { color: #f39c12; margin-top: 0; }
+      
       header {
         background: var(--primary); color: white; padding: 15px 30px;
         display: flex; justify-content: space-between; align-items: center; height: 60px; box-sizing: border-box;
@@ -31,14 +34,18 @@
         display: flex; justify-content: space-between; font-size: 0.9em;
       }
       .user-item.painter { border: 2px solid var(--accent); background: #fffde7; font-weight: bold; }
+      
       .canvas-area {
         flex: 1; max-width: 850px; background: var(--panel-bg); border-radius: 15px;
         padding: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       }
       canvas { background: #fff; border: 1px solid #ddd; border-radius: 10px; cursor: crosshair; width: 100%; height: auto; touch-action: none; }
-      .toolbar { margin-top: 15px; display: flex; gap: 10px; padding: 8px 20px; background: #f1f3f5; border-radius: 30px; }
+      
+      .toolbar { margin-top: 15px; display: flex; gap: 10px; padding: 8px 20px; background: #f1f3f5; border-radius: 30px; transition: 0.3s; }
       .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid white; }
       .color-dot.active { transform: translateY(-4px); border-color: #333; }
+      .btn-clear { background: var(--danger); color: white; border: none; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
       .sidebar {
         width: 280px; display: flex; flex-direction: column; background: var(--panel-bg);
         border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); height: 100%; box-sizing: border-box;
@@ -51,17 +58,31 @@
     <div id="login-overlay">
       <div class="login-box">
         <h2>🎨 캐치마인드</h2>
-        <input type="text" id="nickname-input" placeholder="닉네임" maxlength="10" style="padding: 10px;" onkeypress="if(event.keyCode==13) joinGame()"/><br /><br />
-        <button onclick="joinGame()" style="padding: 10px 30px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer">입장</button>
+        <input type="text" id="nickname-input" placeholder="닉네임" maxlength="10" style="padding: 10px; width: 80%;" onkeypress="if(event.keyCode==13) joinGame()"/><br /><br />
+        <button onclick="joinGame()" style="padding: 10px 30px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; width: 88%;">입장</button>
       </div>
     </div>
+
+    <div id="result-overlay">
+      <div class="result-box">
+        <h1>🏆 FINAL WINNER</h1>
+        <h2 id="winner-name" style="font-size: 2em; margin: 10px 0;">-</h2>
+        <p id="winner-score" style="font-size: 1.2em; color: #666;">Score: 0</p>
+        <hr>
+        <div id="final-rankings" style="text-align: left; max-height: 200px; overflow-y: auto;"></div>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; cursor: pointer;">다시 하기</button>
+      </div>
+    </div>
+
     <header>
       <div style="font-weight: bold;">CATCH MIND</div>
       <div id="status-text">대기 중...</div>
       <div id="word-display" style="color: var(--accent); font-weight: bold;"></div>
     </header>
+
     <div class="main-container">
       <div class="user-list-panel" id="user-list"><strong>PLAYERS</strong></div>
+      
       <div class="canvas-area">
         <canvas id="paint" width="800" height="500"></canvas>
         <div class="toolbar" id="palette">
@@ -70,8 +91,10 @@
           <div class="color-dot" style="background: #3498db" onclick="pickColor('#3498db', this)"></div>
           <div class="color-dot" style="background: #2ecc71" onclick="pickColor('#2ecc71', this)"></div>
           <button onclick="pickColor('white', this)" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px;">지우개</button>
+          <button class="btn-clear" onclick="clearCanvas()">전체 삭제</button>
         </div>
       </div>
+
       <div class="sidebar">
         <div id="chat-box"></div>
         <div style="display: flex; gap: 5px">
@@ -80,6 +103,7 @@
         </div>
       </div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
@@ -93,7 +117,10 @@
 
       function joinGame() {
         const nickname = document.getElementById("nickname-input").value.trim();
-        if (nickname) { socket.emit("set_nickname", nickname); document.getElementById("login-overlay").style.display = "none"; }
+        if (nickname) { 
+          socket.emit("set_nickname", nickname); 
+          document.getElementById("login-overlay").style.display = "none"; 
+        }
       }
 
       socket.on("update_players", (players) => {
@@ -112,17 +139,45 @@
         isPainter = socket.id === data.painterId;
         document.getElementById("status-text").innerText = isPainter ? "🖌️ 당신은 출제자입니다!" : "🧐 정답을 맞춰보세요!";
         document.getElementById("word-display").innerText = "";
-        document.getElementById("palette").style.opacity = isPainter ? "1" : "0.3";
+        
+        // 출제자만 툴바 활성화
+        const toolbar = document.getElementById("palette");
+        toolbar.style.opacity = isPainter ? "1" : "0.3";
+        toolbar.style.pointerEvents = isPainter ? "auto" : "none";
       });
 
-      socket.on("get_answer", (ans) => { document.getElementById("word-display").innerText = "제시어: " + ans; });
+      socket.on("get_answer", (ans) => { 
+        document.getElementById("word-display").innerText = "제시어: " + ans; 
+      });
+
+      // 전체 삭제 기능
+      function clearCanvas() {
+        if (isPainter) socket.emit("clear_canvas");
+      }
+      socket.on("clear_canvas", () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
+      // 게임 종료 모달 처리
+      socket.on("game_over", (data) => {
+        document.getElementById("result-overlay").style.display = "flex";
+        document.getElementById("winner-name").innerText = data.winner.name;
+        document.getElementById("winner-score").innerText = "최종 점수: " + data.winner.score;
+        
+        const rankDiv = document.getElementById("final-rankings");
+        rankDiv.innerHTML = data.allPlayers.map((p, i) => `<p>${i+1}위: ${p.name} (${p.score}점)</p>`).join("");
+      });
 
       function getCoords(e) {
         const rect = canvas.getBoundingClientRect();
-        return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { 
+          x: (clientX - rect.left) * (canvas.width / rect.width), 
+          y: (clientY - rect.top) * (canvas.height / rect.height) 
+        };
       }
 
-      // [핵심] 선 끊기 방지 로직
       canvas.addEventListener("mousedown", (e) => {
         if (!isPainter) return;
         isDrawing = true;
@@ -136,6 +191,7 @@
           ctx.beginPath();
           ctx.strokeStyle = data.color;
           ctx.lineWidth = data.color === "white" ? 30 : 5;
+          ctx.lineCap = "round"; ctx.lineJoin = "round";
           ctx.moveTo(data.x, data.y);
         }
       });
@@ -152,6 +208,7 @@
         if (!isPainter) {
           ctx.strokeStyle = data.color;
           ctx.lineWidth = data.color === "white" ? 30 : 5;
+          ctx.lineCap = "round"; ctx.lineJoin = "round";
           ctx.lineTo(data.x, data.y);
           ctx.stroke();
         }
@@ -178,6 +235,7 @@
         chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight;
       });
       chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+
       function pickColor(color, el) {
         if (!isPainter) return;
         currentColor = color;
@@ -187,4 +245,3 @@
     </script>
   </body>
 </html>
-
