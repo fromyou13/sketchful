@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>캐치마인드 WIDE - 최종 수정판</title>
+    <title>캐치마인드 WIDE - 수정판</title>
     <style>
       :root {
         --main-bg: #e9ecef;
@@ -16,8 +16,8 @@
         margin: 0;
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        overflow: hidden;
+        height: 100vh; /* 화면 꽉 채우기 */
+        overflow: hidden; /* 바깥 스크롤 방지 */
       }
       #login-overlay {
         position: fixed;
@@ -44,6 +44,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        height: 60px;
+        box-sizing: border-box;
       }
       .main-container {
         display: flex;
@@ -51,6 +53,8 @@
         padding: 20px;
         gap: 20px;
         justify-content: center;
+        height: calc(100vh - 60px); /* 헤더 제외한 높이 */
+        box-sizing: border-box;
       }
       .user-list-panel {
         width: 200px;
@@ -58,6 +62,7 @@
         border-radius: 15px;
         padding: 20px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow-y: auto;
       }
       .user-item {
         padding: 12px;
@@ -72,12 +77,13 @@
         background: #fffde7;
         font-weight: bold;
       }
+
       .canvas-area {
         flex: 1;
         max-width: 900px;
         background: var(--panel-bg);
         border-radius: 15px;
-        padding: 25px;
+        padding: 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -93,7 +99,7 @@
         touch-action: none;
       }
       .toolbar {
-        margin-top: 20px;
+        margin-top: 15px;
         display: flex;
         gap: 15px;
         padding: 10px 25px;
@@ -101,8 +107,8 @@
         border-radius: 30px;
       }
       .color-dot {
-        width: 35px;
-        height: 35px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         cursor: pointer;
         border: 3px solid white;
@@ -111,6 +117,7 @@
         transform: translateY(-5px);
         border-color: #333;
       }
+
       .sidebar {
         width: 300px;
         display: flex;
@@ -119,12 +126,16 @@
         border-radius: 15px;
         padding: 20px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        box-sizing: border-box;
       }
       #chat-box {
         flex: 1;
         overflow-y: auto;
         border-bottom: 1px solid #eee;
         margin-bottom: 15px;
+        padding-right: 5px;
+        word-break: break-all;
       }
       .system {
         color: #28a745;
@@ -161,7 +172,7 @@
     <div class="main-container">
       <div class="user-list-panel" id="user-list"><strong>PLAYERS</strong></div>
       <div class="canvas-area">
-        <canvas id="paint" width="850" height="550"></canvas>
+        <canvas id="paint" width="850" height="500"></canvas>
         <div class="toolbar" id="palette">
           <div class="color-dot active" style="background: black" onclick="pickColor('black', this)"></div>
           <div class="color-dot" style="background: #e74c3c" onclick="pickColor('#e74c3c', this)"></div>
@@ -228,16 +239,14 @@
         return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
       }
 
-      // 마우스 누를 때: 그리기 시작
       canvas.addEventListener("mousedown", (e) => {
         if (!isPainter) return;
         isDrawing = true;
         const coords = getCoords(e);
-        ctx.beginPath(); // 선 끊기 방지용 시작
+        ctx.beginPath();
         ctx.moveTo(coords.x, coords.y);
       });
 
-      // 마우스 뗄 때: 선 끊기 신호 전송
       canvas.addEventListener("mouseup", () => {
         if (isPainter) {
           isDrawing = false;
@@ -256,8 +265,6 @@
       socket.on("drawing", (data) => {
         if (!isPainter) draw(data);
       });
-
-      // 서버에서 '선 끊기' 신호를 받으면 path 초기화
       socket.on("stop_drawing", () => {
         ctx.beginPath();
       });
@@ -268,7 +275,6 @@
         ctx.strokeStyle = data.color;
         ctx.lineTo(data.x, data.y);
         ctx.stroke();
-        // ctx.beginPath(); // 여기서 beginPath를 쓰면 점만 찍히므로 제거했습니다.
       }
 
       function sendMessage() {
@@ -297,4 +303,5 @@
     </script>
   </body>
 </html>
+
 
