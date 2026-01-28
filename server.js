@@ -9,20 +9,15 @@ const io = new Server(server);
 
 app.use(express.static(__dirname + "/public"));
 
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
+// [구글 시트 연동]
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
 let words = ["사과", "바나나", "기차", "치킨", "컴퓨터"];
 
 async function loadWordsFromSheet() {
   try {
     const response = await axios.get(SHEET_URL);
-    words = response.data
-      .split(/\r?\n/)
-      .map((w) => w.trim())
-      .filter((w) => w.length > 0);
-  } catch (e) {
-    console.log("시트 로드 실패");
-  }
+    words = response.data.split(/\r?\n/).map((w) => w.trim()).filter((w) => w.length > 0);
+  } catch (e) { console.log("시트 로드 실패"); }
 }
 loadWordsFromSheet();
 
@@ -35,7 +30,7 @@ let currentIndex = 0;
 function startNewRound() {
   if (playerOrder.length === 0) return;
   if (currentIndex >= playerOrder.length) currentIndex = 0;
-
+  
   painterId = playerOrder[currentIndex];
   currentAnswer = words[Math.floor(Math.random() * words.length)];
 
@@ -48,6 +43,7 @@ io.on("connection", (socket) => {
   socket.on("set_nickname", (nickname) => {
     players[socket.id] = { name: nickname || "익명", score: 0 };
     playerOrder.push(socket.id);
+
     if (playerOrder.length === 1) {
       currentIndex = 0;
       startNewRound();
@@ -57,8 +53,9 @@ io.on("connection", (socket) => {
     io.emit("update_players", players);
   });
 
-  socket.on("start_drawing", (coords) => {
-    if (socket.id === painterId) socket.broadcast.emit("start_drawing", coords);
+  // [수정] 선 튀기 방지: 그리기 시작점 신호 중계
+  socket.on("start_drawing", (data) => {
+    if (socket.id === painterId) socket.broadcast.emit("start_drawing", data);
   });
 
   socket.on("drawing", (data) => {
@@ -74,6 +71,8 @@ io.on("connection", (socket) => {
     if (msg.trim() === currentAnswer && socket.id !== painterId) {
       players[socket.id].score += 10;
       io.emit("receive_message", { user: "System", text: `🎉 정답: [${currentAnswer}] (${players[socket.id].name}님 +10점)` });
+      
+      // 정답 시 다음 순서로
       currentIndex = (currentIndex + 1) % playerOrder.length;
       startNewRound();
     } else {
@@ -83,10 +82,18 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     const idx = playerOrder.indexOf(socket.id);
-    playerOrder = playerOrder.filter((id) => id !== socket.id);
+    playerOrder = playerOrder.filter(id => id !== socket.id);
     delete players[socket.id];
-    if (idx <= currentIndex && currentIndex > 0) currentIndex--;
-    startNewRound();
+
+    if (playerOrder.length > 0) {
+      if (idx < currentIndex) currentIndex--;
+      if (socket.id === painterId || currentIndex >= playerOrder.length) {
+        startNewRound();
+      }
+    } else {
+      currentIndex = 0;
+      painterId = null;
+    }
     io.emit("update_players", players);
   });
 });
