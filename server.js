@@ -9,7 +9,6 @@ const io = new Server(server);
 
 app.use(express.static(__dirname + "/public"));
 
-// [구글 시트 연동]
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
 let words = ["사과", "바나나", "기차", "치킨", "컴퓨터"];
 
@@ -28,8 +27,15 @@ let playerOrder = [];
 let currentIndex = 0;
 
 function startNewRound() {
-  if (playerOrder.length === 0) return;
-  if (currentIndex >= playerOrder.length) currentIndex = 0;
+  if (playerOrder.length === 0) {
+    painterId = null;
+    return;
+  }
+
+  // [중요] 인덱스가 인원수보다 커지지 않게 강제 고정
+  if (currentIndex >= playerOrder.length || currentIndex < 0) {
+    currentIndex = 0;
+  }
   
   painterId = playerOrder[currentIndex];
   currentAnswer = words[Math.floor(Math.random() * words.length)];
@@ -53,7 +59,6 @@ io.on("connection", (socket) => {
     io.emit("update_players", players);
   });
 
-  // [수정] 선 튀기 방지: 그리기 시작점 신호 중계
   socket.on("start_drawing", (data) => {
     if (socket.id === painterId) socket.broadcast.emit("start_drawing", data);
   });
@@ -67,29 +72,35 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_message", (msg) => {
-    if (!players[socket.id]) return;
+    const player = players[socket.id];
+    if (!player) return;
+
+    // 정답 판정 (공백 제거 및 대소문자 무시)
     if (msg.trim() === currentAnswer && socket.id !== painterId) {
-      players[socket.id].score += 10;
-      io.emit("receive_message", { user: "System", text: `🎉 정답: [${currentAnswer}] (${players[socket.id].name}님 +10점)` });
+      player.score += 10;
+      io.emit("receive_message", { user: "System", text: `🎉 정답: [${currentAnswer}] (${player.name}님 +10점)` });
       
-      // 정답 시 다음 순서로
+      // 다음 라운드로 넘어가기 전 인덱스 증가
       currentIndex = (currentIndex + 1) % playerOrder.length;
       startNewRound();
     } else {
-      io.emit("receive_message", { user: players[socket.id].name, text: msg });
+      io.emit("receive_message", { user: player.name, text: msg });
     }
   });
 
   socket.on("disconnect", () => {
-    const idx = playerOrder.indexOf(socket.id);
+    const disconnectedIdx = playerOrder.indexOf(socket.id);
+    const wasPainter = (socket.id === painterId);
+    
     playerOrder = playerOrder.filter(id => id !== socket.id);
     delete players[socket.id];
 
     if (playerOrder.length > 0) {
-      if (idx < currentIndex) currentIndex--;
-      if (socket.id === painterId || currentIndex >= playerOrder.length) {
-        startNewRound();
+      // 나간 사람이 현재 순번보다 앞이거나 현재라면 인덱스 조정
+      if (disconnectedIdx <= currentIndex) {
+        currentIndex = (currentIndex > 0) ? currentIndex - 1 : 0;
       }
+      startNewRound();
     } else {
       currentIndex = 0;
       painterId = null;
