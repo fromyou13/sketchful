@@ -9,9 +9,9 @@ const io = new Server(server);
 
 app.use(express.static(__dirname + "/public"));
 
-// ----------------------------------------------------------------
-// [구글 시트 연동] - 아까 복사한 CSV 주소를 여기에 꼭 넣으세요!
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
+// [구글 시트 연동]
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDKhqco-cW24v9ZcNt3ZDaDLW7b0lIOdY6-Yh5YGY6DRqB4fTWvBfSG-ZGPw1o2RIdsZsVHguntlhV/pub?output=csv";
 let words = ["사과", "바나나", "기차", "치킨", "컴퓨터"];
 
 async function loadWordsFromSheet() {
@@ -28,31 +28,45 @@ async function loadWordsFromSheet() {
 }
 loadWordsFromSheet();
 setInterval(loadWordsFromSheet, 10 * 60 * 1000);
-// ----------------------------------------------------------------
 
+// 게임 상태 변수
 let currentAnswer = "";
 let painterId = null;
 let players = {};
+let playerOrder = []; // 접속 순서 저장
+let currentIndex = 0; // 현재 출제자 인덱스
 
 function startNewRound() {
-  const playerIds = Object.keys(players);
-  if (playerIds.length === 0) {
+  if (playerOrder.length === 0) {
     painterId = null;
     return;
   }
-  painterId = playerIds[Math.floor(Math.random() * playerIds.length)];
+
+  // 인덱스가 범위를 벗어나면 처음으로 리셋
+  if (currentIndex >= playerOrder.length) currentIndex = 0;
+
+  painterId = playerOrder[currentIndex];
   currentAnswer = words[Math.floor(Math.random() * words.length)];
 
   io.emit("new_round", { painterId: painterId });
   io.to(painterId).emit("get_answer", currentAnswer);
   io.emit("update_players", players);
+
+  // 다음 라운드를 위해 인덱스 미리 증가
+  currentIndex = (currentIndex + 1) % playerOrder.length;
 }
 
 io.on("connection", (socket) => {
   socket.on("set_nickname", (nickname) => {
     players[socket.id] = { name: nickname || "익명", score: 0 };
-    if (Object.keys(players).length === 1) startNewRound();
-    else socket.emit("new_round", { painterId: painterId });
+    playerOrder.push(socket.id); // 순서 명단에 추가
+
+    if (playerOrder.length === 1) {
+      currentIndex = 0;
+      startNewRound();
+    } else {
+      socket.emit("new_round", { painterId: painterId });
+    }
     io.emit("update_players", players);
   });
 
@@ -60,7 +74,6 @@ io.on("connection", (socket) => {
     if (socket.id === painterId) socket.broadcast.emit("drawing", data);
   });
 
-  // [중요] 선 끊기 신호 중계
   socket.on("stop_drawing", () => {
     socket.broadcast.emit("stop_drawing");
   });
@@ -77,13 +90,26 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    const wasPainter = socket.id === painterId;
+
+    // 배열에서 제거
+    playerOrder = playerOrder.filter((id) => id !== socket.id);
     delete players[socket.id];
+
     io.emit("update_players", players);
-    if (socket.id === painterId) startNewRound();
+
+    if (playerOrder.length > 0) {
+      if (wasPainter) {
+        // 출제자가 나갔으면 현재 인덱스에서 다시 시작
+        startNewRound();
+      }
+    } else {
+      currentIndex = 0;
+      painterId = null;
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
 
