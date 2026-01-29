@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>캐치마인드 WIDE - 수정본</title>
+    <title>캐치마인드 WIDE - 터치 & 튀김 방지 수정본</title>
     <style>
       :root { --main-bg: #e9ecef; --panel-bg: #ffffff; --primary: #4a90e2; --accent: #ffeb3b; }
       body {
@@ -70,7 +70,7 @@
           <div class="color-dot" style="background: #3498db" onclick="pickColor('#3498db', this)"></div>
           <div class="color-dot" style="background: #2ecc71" onclick="pickColor('#2ecc71', this)"></div>
           <button onclick="pickColor('white', this)" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px;">지우개</button>
-          <button onclick="clearCanvas()" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px; background: #ff7675; color: white;">전체삭제</button>
+          <button onclick="clearCanvas()" style="border: none; padding: 5px 12px; cursor: pointer; border-radius: 10px; background: #eee;">전체삭제</button>
         </div>
       </div>
       <div class="sidebar">
@@ -91,6 +91,7 @@
       const userListDiv = document.getElementById("user-list");
 
       let isDrawing = false, isPainter = false, currentColor = "black", currentPainterId = null;
+      let lastX = 0, lastY = 0;
 
       function joinGame() {
         const nickname = document.getElementById("nickname-input").value.trim();
@@ -118,64 +119,72 @@
 
       socket.on("get_answer", (ans) => { document.getElementById("word-display").innerText = "제시어: " + ans; });
 
-      function getCoords(e) {
-        const rect = canvas.getBoundingClientRect();
-        return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
+      // 공통 그리기 함수 (선 튀김 방지 핵심)
+      function drawLine(startX, startY, endX, endY, color, emit = false) {
+        ctx.beginPath();
+        ctx.lineWidth = color === "white" ? 30 : 5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = color;
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.closePath();
+
+        if (emit && isPainter) {
+          socket.emit("drawing", { startX, startY, endX, endY, color });
+        }
       }
 
-      canvas.addEventListener("mousedown", (e) => {
+      // 좌표 계산 (터치 지원)
+      function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      }
+
+      function startDrawing(e) {
         if (!isPainter) return;
         isDrawing = true;
         const coords = getCoords(e);
-        ctx.beginPath(); ctx.moveTo(coords.x, coords.y);
-        socket.emit("start_drawing", { x: coords.x, y: coords.y, color: currentColor });
-      });
+        [lastX, lastY] = [coords.x, coords.y];
+        drawLine(lastX, lastY, coords.x, coords.y, currentColor, true);
+      }
 
-      socket.on("start_drawing", (data) => {
-        if (!isPainter) {
-          ctx.beginPath();
-          ctx.strokeStyle = data.color;
-          ctx.lineWidth = data.color === "white" ? 30 : 5;
-          ctx.moveTo(data.x, data.y);
-        }
-      });
-
-      canvas.addEventListener("mousemove", (e) => {
+      function moveDrawing(e) {
         if (!isDrawing || !isPainter) return;
+        if (e.cancelable) e.preventDefault(); // 스크롤 방지
         const coords = getCoords(e);
-        const data = { x: coords.x, y: coords.y, color: currentColor };
-        draw(data);
-        socket.emit("drawing", data);
-      });
+        drawLine(lastX, lastY, coords.x, coords.y, currentColor, true);
+        [lastX, lastY] = [coords.x, coords.y];
+      }
+
+      function stopDrawing() { isDrawing = false; }
+
+      // 마우스 이벤트
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", moveDrawing);
+      window.addEventListener("mouseup", stopDrawing);
+
+      // 터치 이벤트
+      canvas.addEventListener("touchstart", startDrawing, { passive: false });
+      canvas.addEventListener("touchmove", moveDrawing, { passive: false });
+      canvas.addEventListener("touchend", stopDrawing);
 
       socket.on("drawing", (data) => {
-        if (!isPainter) {
-          ctx.strokeStyle = data.color;
-          ctx.lineWidth = data.color === "white" ? 30 : 5;
-          ctx.lineTo(data.x, data.y);
-          ctx.stroke();
-        }
+        if (!isPainter) drawLine(data.startX, data.startY, data.endX, data.endY, data.color);
       });
 
-      canvas.addEventListener("mouseup", () => { if (isPainter) { isDrawing = false; socket.emit("stop_drawing"); } });
-      socket.on("stop_drawing", () => ctx.beginPath());
-
-      // [추가] 전체 삭제 버튼 함수
       function clearCanvas() {
         if (!isPainter) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         socket.emit("clear_canvas");
       }
-
-      socket.on("clear_canvas", () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      });
-
-      function draw(data) {
-        ctx.lineWidth = data.color === "white" ? 30 : 5;
-        ctx.lineCap = "round"; ctx.lineJoin = "round";
-        ctx.strokeStyle = data.color;
-        ctx.lineTo(data.x, data.y); ctx.stroke();
-      }
+      socket.on("clear_canvas", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
 
       function sendMessage() {
         const msg = chatInput.value.trim();
@@ -192,7 +201,7 @@
         if (!isPainter) return;
         currentColor = color;
         document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
-        if (el.classList.contains("color-dot")) el.classList.add("active");
+        if (el && el.classList.contains("color-dot")) el.classList.add("active");
       }
     </script>
   </body>
